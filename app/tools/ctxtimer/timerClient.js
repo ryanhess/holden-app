@@ -1,6 +1,6 @@
 "use client"
 import { useState, useRef, useEffect } from "react";
-import { timeString } from "@/lib/datetime"
+import { timeString } from "@/lib/helpers"
 
 /*
 State consists of:
