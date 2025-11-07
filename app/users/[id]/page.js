@@ -1,13 +1,15 @@
 // server component by default
 'use server'
-import { simulateApiCall } from '@/lib/devtools'
-import { Suspense } from 'react'
+import { simulateApiCall } from '@/lib/devtools';
+import { Suspense } from 'react';
+import { getUserData } from '@/lib/actions/crud';
 
 export async function generateMetadata({ params }) {
-    const { id } = await params;
-    const { babyName } = await getUserData(id);
+    // const { id } = await params;
+    // const { babyName } = await getUserData(id);
+    const { babyName } = await simulateApiCall({ babyName: "Holden" }, 2000);
     return {
-        title: `User ${babyName} Profile`
+        title: `${babyName}'s Profile`
     };
 }
 
@@ -23,24 +25,11 @@ export default async function ProfilePage({ params }) {
 }
 
 async function UserDataDisplay({ id }) {
-    const { userID, babyName, babyBirthday } = await getUserData(id);
+    const usrData = await getUserData(id);
     return (
         <ul>
-            <li>userID: {userID}</li>
-            <li>Baby's Name: {babyName}</li>
+            <li>userID: {usrData._id}</li>
+            <li>Baby's Name: {usrData.babyName}</li>
         </ul>
     );
 }
-
-async function getUserData(id) {
-    const data = {
-        userID: id,
-        babyName: 'Holden',
-        babyBirthday: new Date("10/19/2025")
-    };
-
-    await simulateApiCall(data, 2000);
-
-    return data;
-}
-

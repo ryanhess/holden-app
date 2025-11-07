@@ -1,15 +1,33 @@
 import Link from 'next/link'
-import routes from '@/lib/routes'
+import { getAllUserData } from '@/lib/actions/crud';
+import { Suspense } from 'react';
+import { routes } from '@/lib/routes'
+
 
 export const metadata = {
     title: 'Users List'
 };
 
-export default function UsersList() {
+export default function Page() {
+    return (
+        <Suspense fallback={<>Loading Users list...</>}>
+            <UsersList />
+        </Suspense>
+    );
+}
+
+export async function UsersList() {
+    const users = await getAllUserData();
+    console.log(users);
     return (
         <ul>
-            <li><Link href={routes.users.profile(1)}>Id 1</Link></li>
-            <li><Link href="/users/2">User Id 2</Link></li>
-        </ul >
+            {users.map((user, i) =>
+                <li key={i}>
+                    <Link href={routes.users.profile(user._id)}>
+                        UserID: {user._id}. Baby Name: {user.babyName}
+                    </Link>
+                </li>
+            )}
+        </ul>
     );
 }

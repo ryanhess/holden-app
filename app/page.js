@@ -1,5 +1,5 @@
 import RootLayout from "@/app/layout";
-import routes from "@/lib/routes";
+import { routes } from "@/lib/routes";
 import Link from "next/link";
 
 export const metadata = {
