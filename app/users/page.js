@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { getAllUserData } from '@/lib/actions/crud';
 import { Suspense } from 'react';
-import { routes } from '@/lib/routes'
+import { routes } from '@/lib/globals/routes'
 
 
 export const metadata = {
@@ -18,7 +18,7 @@ export default function Page() {
 
 export async function UsersList() {
     const users = await getAllUserData();
-    console.log(users);
+    // console.log(users);
     return (
         <ul>
             {users.map((user, i) =>

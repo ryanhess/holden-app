@@ -40,19 +40,33 @@ export default function ContractionTimer() {
     }
 
     return (
-        <>
-            <StartStopContainer class='' inContraction={currentContraction} handleStartStop={handleStartStop} />
+        <div id='ctx-timer-container' className='flex justify-center items-center flex-col'>
+            <StartStopContainer inContraction={currentContraction} handleStartStop={handleStartStop} />
             <ContractionList ctxList={contractionHistory} />
-        </>
+        </div>
     );
 }
 
 function StartStopContainer({ inContraction, handleStartStop }) {
+    let startStopContent;
     if (inContraction) {
-        return <NewContractionUI handleStopCtx={handleStartStop} />;
+        startStopContent = <NewContractionUI handleStopCtx={handleStartStop} />;
     } else {
-        return <StartButton handleStartCtx={handleStartStop} />;
+        startStopContent =
+            <StartStopButton
+                bgColorStr='bg-green-700'
+                onClickHandler={() => handleStartStop({
+                    startTime: new Date()
+                })}
+            >
+                START
+            </StartStopButton >;
     }
+    return (
+        <div id='start-stop-container'>
+            {startStopContent}
+        </div>
+    );
 }
 
 function NewContractionUI({ handleStopCtx }) {
@@ -67,30 +81,48 @@ function NewContractionUI({ handleStopCtx }) {
     }
 
     return (
-        <div>
+        <div className='flex items-center flex-col border-1'>
+            <StartStopButton
+                bgColorStr='bg-red-700'
+                onClickHandler={() => handleStopCtx({
+                    duration: duration,
+                    intensity: intensitySlider.current.value
+                })}
+            >
+                STOP
+            </StartStopButton>
             <Timer onTimerTick={onTimerTick} />
             <label>Intensity</label>
             <input
+                type="range"
                 ref={intensitySlider}
                 id={intensityName}
                 name={intensityName}
                 min={intensityMin}
                 max={intensityMax}
-                type="range" />
-            <button onClick={() => handleStopCtx({
-                duration: duration,
-                intensity: intensitySlider.current.value
-            })}>Stop</button >
+            />
         </div>
     ); // we are ending the contraction, no need to pass a start time.
 }
 
-function StartButton({ handleStartCtx }) {
+function StartStopButton({ bgColorStr, onClickHandler, children }) {
     return (
-        <button onClick={() => handleStartCtx({
-            startTime: new Date()
-        })}>Start</button>
-    ); // pass only the start time.
+        <button
+            className={
+                `${bgColorStr}
+                w-20
+                aspect-square
+                rounded-full
+                flex
+                items-center
+                justify-center
+                font-bold`
+            }
+            onClick={onClickHandler}
+        >
+            {children}
+        </button>
+    );
 }
 
 // timer that automaticaly starts from zero on render and can return its value in (?)ms
@@ -114,8 +146,8 @@ export function Timer({ onTimerTick }) {
 
     return (
         <div>
-            <h1>Elapsed Time:</h1>
-            <p>{timeString(elapsedTime)}</p>
+            <span>Elapsed Time: </span>
+            <span>{timeString(elapsedTime)}</span>
         </div>
     );
 }
@@ -123,15 +155,15 @@ export function Timer({ onTimerTick }) {
 function ContractionList({ ctxList }) {
     let interval = null;
     return (
-        <ul>
+        <ul className='w-60'>
             {ctxList.map((ctx, i, ctxHist) => {
                 if (i > 0) {
                     const prevCtx = ctxHist[i - 1];
                     let cadence = new Date(ctx.startTime - prevCtx.startTime);
                     let rest = new Date(cadence - prevCtx.duration);
                     interval = (
-                        <div>
-                            <p>Interval</p>
+                        <div className='bg-green-300 p-1 rounded-lg text-black'>
+                            <h3>Interval</h3>
                             <p>Contraction Cadence: {timeString(cadence)}</p>
                             <p>Rest Time: {timeString(rest)}</p>
                         </div>
@@ -141,8 +173,8 @@ function ContractionList({ ctxList }) {
                 return (
                     <li key={i}>
                         {interval}
-                        <div>
-                            <p>Contraction</p>
+                        <div className='bg-sky-900 p-1 rounded-lg'>
+                            <h3>Contraction</h3>
                             <p>Start Time: {ctx.startTime.toLocaleTimeString()}</p>
                             <p>Duration: {timeString(ctx.duration)}</p>
                             <p>Intensity: {ctx.intensity}</p>

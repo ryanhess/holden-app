@@ -25,7 +25,47 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-.header {
+nav#navbar {
+  overflow: hidden;
   position: fixed;
   top: 0;
+  width: 100%;
+  background-color: #435f6e;
+}
+
+a.nav-link {
+  float: left;
+  display: block;
+  color: #f2f2f2;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  font-size: 17px;
+}
+
+a.nav-link:hover {
+  background: #99b2b9;
+}
+
+main {
+  height: 100%;
+  margin-top: 54px;
+  margin-bottom: 54px;
+  padding: 16px;
+}
+
+footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  padding: 15px;
+  background-color: #435f6e;
+}
+
+h1 {
+  font-size: 30px;
+}
+
+h3 {
+  font-size: 1.5em;
 }

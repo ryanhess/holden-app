@@ -1,7 +1,7 @@
 import "./globals.css";
 import Head from 'next/head';
 import Link from 'next/link';
-import { routes } from '@/lib/routes'
+import { routes } from '@/lib/globals/routes'
 
 export default function RootLayout({ children, title }) {
   return (
@@ -10,12 +10,12 @@ export default function RootLayout({ children, title }) {
         <title>{title}</title>
       </head>
       <body>
-        <header className='header'>
-          <nav>
-            <Link href={routes.root}>Home</Link>|
-            <Link href={routes.root}>Profile</Link>|
-            <Link href={routes.users._}>Users</Link>|
-            <Link href={routes.root}>Sample</Link>
+        <header>
+          <nav id='navbar'>
+            <Link className='nav-link' href={routes.root}>Home</Link>
+            <Link className='nav-link' href={routes.root}>Profile</Link>
+            <Link className='nav-link' href={routes.users._}>Users</Link>
+            <Link className='nav-link' href={routes.root}>Sample</Link>
           </nav>
         </header>
         <main>
