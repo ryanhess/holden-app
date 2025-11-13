@@ -1,5 +1,5 @@
 "use client"
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, memo, useCallback } from "react";
 import { timeString } from "@/lib/helpers"
 
 /*
@@ -24,20 +24,31 @@ export default function ContractionTimer() {
     const [currentContraction, setCurrentContraction] = useState(null);
     const [contractionHistory, setContractionHistory] = useState([]);
 
-    function handleStartStop({ startTime = null, duration = null, intensity = null }) {
+    const handleStartStop = useCallback(({ startTime = null, duration = null, intensity = null }) => {
         if (currentContraction) {
-            const newCtxHist = [...contractionHistory];
-            newCtxHist.push({
+            // Pre-calculate interval data when adding a new contraction
+            const newContraction = {
+                id: Date.now(), // Unique ID for React key
                 startTime: currentContraction.startTime,
                 duration: duration,
-                intensity: intensity
-            });
+                intensity: intensity,
+                cadence: null,
+                rest: null
+            };
+
+            // Calculate cadence and rest if there's a previous contraction
+            if (contractionHistory.length > 0) {
+                const prevCtx = contractionHistory[contractionHistory.length - 1];
+                newContraction.cadence = new Date(newContraction.startTime - prevCtx.startTime);
+                newContraction.rest = new Date(newContraction.cadence - prevCtx.duration);
+            }
+
+            setContractionHistory([...contractionHistory, newContraction]);
             setCurrentContraction(null);
-            setContractionHistory(newCtxHist);
         } else {
             setCurrentContraction({ startTime: startTime });
         }
-    }
+    }, [currentContraction, contractionHistory]);
 
     return (
         <div id='ctx-timer-container' className='flex justify-center items-center flex-col'>
@@ -47,10 +58,10 @@ export default function ContractionTimer() {
     );
 }
 
-function StartStopContainer({ inContraction, handleStartStop }) {
+const StartStopContainer = memo(function StartStopContainer({ inContraction, handleStartStop }) {
     let startStopContent;
     if (inContraction) {
-        startStopContent = <NewContractionUI handleStopCtx={handleStartStop} />;
+        startStopContent = <NewContractionUI handleStopCtx={handleStartStop} startTime={inContraction.startTime} />;
     } else {
         startStopContent =
             <StartStopButton
@@ -67,31 +78,29 @@ function StartStopContainer({ inContraction, handleStartStop }) {
             {startStopContent}
         </div>
     );
-}
+});
 
-function NewContractionUI({ handleStopCtx }) {
-    const [duration, setDuration] = useState(new Date(0));
+const NewContractionUI = memo(function NewContractionUI({ handleStopCtx, startTime }) {
     const intensityName = "intensity";
     const intensitySlider = useRef(null);
     const intensityMin = 1;
     const intensityMax = 10;
 
-    function onTimerTick(elapsed) {
-        setDuration(elapsed);
-    }
-
     return (
         <div className='flex items-center flex-col border-1'>
             <StartStopButton
                 bgColorStr='bg-red-700'
-                onClickHandler={() => handleStopCtx({
-                    duration: duration,
-                    intensity: intensitySlider.current.value
-                })}
+                onClickHandler={() => {
+                    const duration = new Date(Date.now() - startTime.getTime());
+                    handleStopCtx({
+                        duration: duration,
+                        intensity: intensitySlider.current.value
+                    });
+                }}
             >
                 STOP
             </StartStopButton>
-            <Timer onTimerTick={onTimerTick} />
+            <Timer startTime={startTime} />
             <label>Intensity</label>
             <input
                 type="range"
@@ -100,12 +109,13 @@ function NewContractionUI({ handleStopCtx }) {
                 name={intensityName}
                 min={intensityMin}
                 max={intensityMax}
+                defaultValue={intensityMin}
             />
         </div>
-    ); // we are ending the contraction, no need to pass a start time.
-}
+    );
+});
 
-function StartStopButton({ bgColorStr, onClickHandler, children }) {
+const StartStopButton = memo(function StartStopButton({ bgColorStr, onClickHandler, children }) {
     return (
         <button
             className={
@@ -123,12 +133,10 @@ function StartStopButton({ bgColorStr, onClickHandler, children }) {
             {children}
         </button>
     );
-}
+});
 
 // timer that automaticaly starts from zero on render and can return its value in (?)ms
-export function Timer({ onTimerTick }) {
-    // get the current time and set the timer to 0
-    const [startTime] = useState(new Date());
+export function Timer({ startTime }) {
     const [elapsedTime, setElapsedTime] = useState(new Date(0));
 
     useEffect(() => {
@@ -137,12 +145,12 @@ export function Timer({ onTimerTick }) {
             let now = new Date();
             let elapsed = new Date(now - startTime);
             setElapsedTime(elapsed);
-            onTimerTick(elapsed);
+            console.log('⏱️  Timer updated:', timeString(elapsed));
         }, 1000);
 
         // Clean up the interval when the component unmounts
         return () => clearInterval(intervalId);
-    }, []); // Empty dependency array ensures useEffect runs only once on mount
+    }, [startTime]);
 
     return (
         <div>
@@ -152,36 +160,31 @@ export function Timer({ onTimerTick }) {
     );
 }
 
-function ContractionList({ ctxList }) {
-    let interval = null;
+const ContractionList = memo(function ContractionList({ ctxList }) {
+    // Performance tracking: Log renders to console
+    useEffect(() => {
+        console.log('🔄 ContractionList rendered. Items:', ctxList.length);
+    });
+
     return (
         <ul className='w-60'>
-            {ctxList.map((ctx, i, ctxHist) => {
-                if (i > 0) {
-                    const prevCtx = ctxHist[i - 1];
-                    let cadence = new Date(ctx.startTime - prevCtx.startTime);
-                    let rest = new Date(cadence - prevCtx.duration);
-                    interval = (
+            {ctxList.map((ctx) => (
+                <li key={ctx.id}>
+                    {ctx.cadence && (
                         <div className='bg-green-300 p-1 rounded-lg text-black'>
                             <h3>Interval</h3>
-                            <p>Contraction Cadence: {timeString(cadence)}</p>
-                            <p>Rest Time: {timeString(rest)}</p>
+                            <p>Contraction Cadence: {timeString(ctx.cadence)}</p>
+                            <p>Rest Time: {timeString(ctx.rest)}</p>
                         </div>
-                    );
-                }
-
-                return (
-                    <li key={i}>
-                        {interval}
-                        <div className='bg-sky-900 p-1 rounded-lg'>
-                            <h3>Contraction</h3>
-                            <p>Start Time: {ctx.startTime.toLocaleTimeString()}</p>
-                            <p>Duration: {timeString(ctx.duration)}</p>
-                            <p>Intensity: {ctx.intensity}</p>
-                        </div>
-                    </li>
-                );
-            })}
-        </ul >
+                    )}
+                    <div className='bg-sky-900 p-1 rounded-lg'>
+                        <h3>Contraction</h3>
+                        <p>Start Time: {ctx.startTime.toLocaleTimeString()}</p>
+                        <p>Duration: {timeString(ctx.duration)}</p>
+                        <p>Intensity: {ctx.intensity}</p>
+                    </div>
+                </li>
+            ))}
+        </ul>
     );
-}
+});

@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { getAllUserData } from '@/lib/actions/crud';
 import { Suspense } from 'react';
 import { routes } from '@/lib/globals/routes'
+import VirtualUsersList from './VirtualUsersList';
 
 
 export const metadata = {
@@ -18,16 +19,5 @@ export default function Page() {
 
 export async function UsersList() {
     const users = await getAllUserData();
-    // console.log(users);
-    return (
-        <ul>
-            {users.map((user, i) =>
-                <li key={i}>
-                    <Link href={routes.users.profile(user._id)}>
-                        UserID: {user._id}. Baby Name: {user.babyName}
-                    </Link>
-                </li>
-            )}
-        </ul>
-    );
+    return <VirtualUsersList users={users} />;
 }
